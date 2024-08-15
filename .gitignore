@@ -1,0 +1,15 @@
+# Folders
+dist
+node_modules
+.idea
+.git
+
+# Files
+.env
+package-lock.json
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
