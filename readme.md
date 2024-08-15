@@ -18,12 +18,12 @@
    git clone https://github.com/mr-mashanlo/html-starter.git
    ```
 
-2. **Установить зависимости:**:
+2. **Установить зависимости**:
    ```bash
    npm install
    ```
 
-3. **Запустить разработку:**:
+3. **Запустить разработку**:
    ```bash
    npm run dev
    ```
