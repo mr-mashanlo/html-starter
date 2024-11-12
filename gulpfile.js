@@ -10,6 +10,8 @@ import autoprefixer from 'gulp-autoprefixer';
 import csso from 'gulp-csso';
 import fileinclude from 'gulp-file-include';
 import groupMediaQueries from 'gulp-group-css-media-queries';
+import shorthand from 'gulp-shorthand';
+import uncss from 'gulp-uncss';
 import gulpSass from 'gulp-sass';
 import * as dartSass from 'sass';
 import sassglob from 'gulp-sass-glob';
@@ -57,7 +59,7 @@ function serve() {
     notify: false
   } );
   
-  watch( paths.html.watch, html );
+  watch( paths.html.watch, parallel( html, styles ) );
   watch( paths.styles.watch, styles );
   watch( paths.scripts.watch, scripts );
   watch( paths.images.watch, images );
@@ -81,7 +83,9 @@ function styles() {
     .pipe( sass().on( 'error', sass.logError ) )
     .pipe( autoprefixer() )
     .pipe( groupMediaQueries() )
-    .pipe( csso() )
+    .pipe( shorthand() )
+    .pipe( uncss( { html: [ paths.html.watch ] } ) )
+    .pipe( csso( { comments: false } ) )
     .pipe( rename( { suffix: '.min' } ) )
     .pipe( dest( paths.styles.dest ) )
     .pipe( browserSync.stream() );
