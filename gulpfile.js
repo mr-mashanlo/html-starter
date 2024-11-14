@@ -1,20 +1,26 @@
 import pkg from 'gulp';
 
 import browserSync from 'browser-sync';
+import { hideBin } from 'yargs/helpers';
 import { deleteAsync } from 'del';
 import gulpIf from 'gulp-if';
 import newer from 'gulp-newer';
 import rename from 'gulp-rename';
 
-import autoprefixer from 'gulp-autoprefixer';
-import csso from 'gulp-csso';
 import fileinclude from 'gulp-file-include';
-import groupMediaQueries from 'gulp-group-css-media-queries';
-import shorthand from 'gulp-shorthand';
-import uncss from 'gulp-uncss';
+
 import gulpSass from 'gulp-sass';
 import * as dartSass from 'sass';
-import sassglob from 'gulp-sass-glob';
+
+import postcss from 'gulp-postcss';
+import autoprefixer from 'autoprefixer';
+import cssnano from 'cssnano';
+import purgecss from '@fullhuman/postcss-purgecss';
+import sortMediaQueries from 'postcss-sort-media-queries';
+import mergeRules from 'postcss-merge-rules';
+import discardComments from 'postcss-discard-comments';
+import discardDuplicates from 'postcss-discard-duplicates';
+import discardUnused from 'postcss-discard-unused';
 
 import webpackStream from 'webpack-stream';
 import terser from 'gulp-terser';
@@ -24,6 +30,7 @@ import ttf2woff2 from 'gulp-ttf2woff2';
 
 const { dest, parallel, series, src, watch } = pkg;
 const sass = gulpSass( dartSass );
+const isDevMode = hideBin( process.argv ).includes( '--dev' );
 
 const paths = {
   html: {
@@ -56,9 +63,10 @@ const paths = {
 function serve() {
   browserSync.init( {
     server: { baseDir: 'dist/' },
-    notify: false
+    notify: false,
+    open: false
   } );
-  
+
   watch( paths.html.watch, parallel( html, styles ) );
   watch( paths.styles.watch, styles );
   watch( paths.scripts.watch, scripts );
@@ -79,13 +87,17 @@ function html() {
 
 function styles() {
   return src( paths.styles.src )
-    .pipe( sassglob() )
     .pipe( sass().on( 'error', sass.logError ) )
-    .pipe( autoprefixer() )
-    .pipe( groupMediaQueries() )
-    .pipe( shorthand() )
-    .pipe( uncss( { html: [ paths.html.watch ] } ) )
-    .pipe( csso( { comments: false } ) )
+    .pipe( postcss( [
+      purgecss( { content: [ paths.html.watch ], safelist: [] } ),
+      discardUnused(),
+      discardDuplicates(),
+      discardComments( { removeAll: true } ),
+      mergeRules(),
+      autoprefixer(),
+      sortMediaQueries(),
+      cssnano()
+    ] ) )
     .pipe( rename( { suffix: '.min' } ) )
     .pipe( dest( paths.styles.dest ) )
     .pipe( browserSync.stream() );
@@ -120,7 +132,6 @@ function fonts() {
     .pipe( browserSync.stream() );
 }
 
-const dev = series( clean, parallel( html, styles, scripts, images, fonts ), serve );
-const build = series( clean, parallel( html, styles, scripts, images, fonts ) );
+const build = series( clean, fonts, images, parallel( html, styles, scripts ), isDevMode ? serve : () => Promise.resolve() );
 
-export { dev as default, build };
+export default build;
