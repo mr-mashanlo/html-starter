@@ -23,7 +23,7 @@ import discardDuplicates from 'postcss-discard-duplicates';
 import discardUnused from 'postcss-discard-unused';
 
 import webpackStream from 'webpack-stream';
-import terser from 'gulp-terser';
+import TerserPlugin from 'terser-webpack-plugin';
 
 import webp from 'gulp-webp';
 import ttf2woff2 from 'gulp-ttf2woff2';
@@ -106,12 +106,28 @@ function styles() {
 function scripts() {
   return src( paths.scripts.src )
     .pipe( webpackStream( {
-      mode: 'production',
+      mode: !isDevMode ? 'production' : 'development',
       performance: { hints: false },
-      module: { rules: [ { test: /\.js$/, exclude: /node_modules/, use: { loader: 'babel-loader', options: { presets: [ '@babel/preset-env' ] } } } ] },
+      module: {
+        rules: [
+          {
+            test: /\.js$/,
+            exclude: /node_modules/,
+            use: {
+              loader: 'babel-loader',
+              options: {
+                presets: [ '@babel/preset-env' ]
+              }
+            }
+          }
+        ]
+      },
+      optimization: {
+        minimize: !isDevMode,
+        minimizer: [ new TerserPlugin() ]
+      },
       output: { filename: 'main.min.js' }
     } ) )
-    .pipe( terser() )
     .pipe( dest( paths.scripts.dest ) )
     .pipe( browserSync.stream() );
 }
