@@ -1,36 +1,22 @@
-import pkg from 'gulp';
-
 import browserSync from 'browser-sync';
-import { hideBin } from 'yargs/helpers';
 import { deleteAsync } from 'del';
+import pkg from 'gulp';
+import fileinclude from 'gulp-file-include';
 import gulpIf from 'gulp-if';
 import newer from 'gulp-newer';
-import rename from 'gulp-rename';
-
-import fileinclude from 'gulp-file-include';
-
-import gulpSass from 'gulp-sass';
-import * as dartSass from 'sass';
-
 import postcss from 'gulp-postcss';
-import autoprefixer from 'autoprefixer';
-import cssnano from 'cssnano';
-import purgecss from '@fullhuman/postcss-purgecss';
-import sortMediaQueries from 'postcss-sort-media-queries';
-import mergeRules from 'postcss-merge-rules';
-import discardComments from 'postcss-discard-comments';
-import discardDuplicates from 'postcss-discard-duplicates';
-import discardUnused from 'postcss-discard-unused';
-
-import webpackStream from 'webpack-stream';
-import TerserPlugin from 'terser-webpack-plugin';
-
-import webp from 'gulp-webp';
+import rename from 'gulp-rename';
+import gulpSass from 'gulp-sass';
 import ttf2woff2 from 'gulp-ttf2woff2';
+import webp from 'gulp-webp';
+import * as dartSass from 'sass';
+import TerserPlugin from 'terser-webpack-plugin';
+import webpackStream from 'webpack-stream';
+import { hideBin } from 'yargs/helpers';
 
+const isDevelopment = hideBin( process.argv ).includes( '--dev' );
 const { dest, parallel, series, src, watch } = pkg;
 const sass = gulpSass( dartSass );
-const isDevelopment = hideBin( process.argv ).includes( '--dev' );
 
 const paths = {
   html: {
@@ -90,16 +76,7 @@ function html() {
 function styles() {
   return src( paths.styles.src )
     .pipe( sass().on( 'error', sass.logError ) )
-    .pipe( postcss( [
-      purgecss( { content: [ paths.html.watch ], safelist: [] } ),
-      discardUnused(),
-      discardDuplicates(),
-      discardComments( { removeAll: true } ),
-      mergeRules(),
-      autoprefixer(),
-      sortMediaQueries(),
-      cssnano()
-    ] ) )
+    .pipe( postcss() )
     .pipe( rename( { suffix: '.min' } ) )
     .pipe( dest( paths.styles.dest ) )
     .pipe( browserSync.stream() );
@@ -120,10 +97,7 @@ function scripts() {
     .pipe( webpackStream( {
       mode: isDevelopment ? 'development' : 'production',
       output: { filename: 'main.min.js' },
-      optimization: {
-        splitChunks: { chunks: 'all' },
-        minimizer: isDevelopment ? [] : [ new TerserPlugin() ]
-      },
+      optimization: { minimizer: isDevelopment ? [] : [ new TerserPlugin() ] },
       module: {
         rules: [
           {
