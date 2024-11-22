@@ -83,16 +83,6 @@ function styles() {
 }
 
 function scripts() {
-  const babelOptions = {
-    targets: 'defaults',
-    presets: [ '@babel/preset-env' ]
-  };
-
-  const babelLoader = {
-    loader: 'babel-loader',
-    options: babelOptions
-  };
-
   return src( paths.scripts.src )
     .pipe( webpackStream( {
       mode: isDevelopment ? 'development' : 'production',
@@ -103,7 +93,7 @@ function scripts() {
           {
             test: /\.js$/,
             exclude: /node_modules/,
-            use: babelLoader
+            use: 'babel-loader'
           }
         ]
       }
