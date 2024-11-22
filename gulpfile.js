@@ -30,7 +30,7 @@ import ttf2woff2 from 'gulp-ttf2woff2';
 
 const { dest, parallel, series, src, watch } = pkg;
 const sass = gulpSass( dartSass );
-const isDevMode = hideBin( process.argv ).includes( '--dev' );
+const isDevelopment = hideBin( process.argv ).includes( '--dev' );
 
 const paths = {
   html: {
@@ -60,13 +60,15 @@ const paths = {
   }
 };
 
-function serve() {
+function server() {
   browserSync.init( {
     server: { baseDir: 'dist/' },
     notify: false,
     open: false
   } );
+}
 
+function watcher() {
   watch( paths.html.watch, parallel( html, styles ) );
   watch( paths.styles.watch, styles );
   watch( paths.scripts.watch, scripts );
@@ -104,29 +106,33 @@ function styles() {
 }
 
 function scripts() {
+  const babelOptions = {
+    targets: 'defaults',
+    presets: [ '@babel/preset-env' ]
+  };
+
+  const babelLoader = {
+    loader: 'babel-loader',
+    options: babelOptions
+  };
+
   return src( paths.scripts.src )
     .pipe( webpackStream( {
-      mode: !isDevMode ? 'production' : 'development',
-      performance: { hints: false },
+      mode: isDevelopment ? 'development' : 'production',
+      output: { filename: 'main.min.js' },
+      optimization: {
+        splitChunks: { chunks: 'all' },
+        minimizer: isDevelopment ? [] : [ new TerserPlugin() ]
+      },
       module: {
         rules: [
           {
             test: /\.js$/,
             exclude: /node_modules/,
-            use: {
-              loader: 'babel-loader',
-              options: {
-                presets: [ '@babel/preset-env' ]
-              }
-            }
+            use: babelLoader
           }
         ]
-      },
-      optimization: {
-        minimize: !isDevMode,
-        minimizer: [ new TerserPlugin() ]
-      },
-      output: { filename: 'main.min.js' }
+      }
     } ) )
     .pipe( dest( paths.scripts.dest ) )
     .pipe( browserSync.stream() );
@@ -148,6 +154,7 @@ function fonts() {
     .pipe( browserSync.stream() );
 }
 
-const build = series( clean, fonts, images, parallel( html, styles, scripts ), isDevMode ? serve : () => Promise.resolve() );
+const build = series( clean, fonts, images, parallel( html, styles, scripts ), isDevelopment ? parallel( server, watcher ) : () => Promise.resolve() );
+const preview = server;
 
-export default build;
+export { build as default, preview };

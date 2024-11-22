@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "gulp --dev",
     "build": "gulp --build",
+    "preview": "gulp preview",
     "lint": "eslint . --fix"
   },
   "devDependencies": {
