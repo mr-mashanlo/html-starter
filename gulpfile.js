@@ -104,7 +104,8 @@ function scripts() {
 
 function images() {
   return src( paths.images.src )
-    .pipe( newer( paths.images.dest ) )
+    .pipe( newer( { dest:paths.images.dest, ext: '.webp' } ) )
+    .pipe( newer( { dest:paths.images.dest, ext: '.svg' } ) )
     .pipe( gulpIf( file => [ '.png', '.jpg', '.jpeg' ].includes( file.extname ), webp( { quality: 90 } ) ) )
     .pipe( dest( paths.images.dest ) )
     .pipe( browserSync.stream() );
@@ -112,7 +113,7 @@ function images() {
 
 function fonts() {
   return src( paths.fonts.src, { encoding: false } )
-    .pipe( newer( paths.fonts.dest ) )
+    .pipe( newer( { dest: paths.fonts.dest, ext: '.woff2' } ) )
     .pipe( gulpIf( file => [ '.ttf' ].includes( file.extname ), ttf2woff2() ) )
     .pipe( dest( paths.fonts.dest ) )
     .pipe( browserSync.stream() );
