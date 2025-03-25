@@ -50,6 +50,7 @@ function html() {
   return src( paths.html.src )
     .pipe( fileinclude() )
     .pipe( dest( paths.html.dest ) )
+    .pipe( browserSync.stream() )
 }
 
 function styles() {
@@ -57,7 +58,8 @@ function styles() {
     .pipe( sass().on( 'error', sass.logError ) )
     .pipe( postcss() )
     .pipe( rename( { suffix: '.min' } ) )
-    .pipe( dest( paths.styles.dest ) )
+    .pipe( dest(paths.styles.dest) )
+    .pipe( browserSync.stream() )
 }
 
 async function scripts() {
@@ -70,6 +72,9 @@ async function scripts() {
     file: paths.scripts.dest,
     format: 'iife'
   });
+
+  return src(paths.scripts.src)
+    .pipe( browserSync.stream() )
 }
 
 function images() {
@@ -77,7 +82,7 @@ function images() {
     .pipe( newer( { dest:paths.images.dest, ext: '.webp' } ) )
     .pipe( newer( { dest:paths.images.dest, ext: '.svg' } ) )
     .pipe( gulpIf( file => [ '.png', '.jpg', '.jpeg' ].includes( file.extname ), webp( { quality: 50 } ) ) )
-    .pipe( dest( paths.images.dest ) )
+    .pipe( dest(paths.images.dest) )
 }
 
 function fonts() {
