@@ -1,4 +1,5 @@
 import babel from '@rollup/plugin-babel';
+import commonjs from "@rollup/plugin-commonjs";
 import resolve from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 import browserSync from 'browser-sync';
@@ -65,7 +66,7 @@ function styles() {
 async function scripts() {
   const bundle = await rollup({
     input: paths.scripts.src,
-    plugins: [ resolve(), babel( { babelHelpers: 'bundled' } ), terser() ]
+    plugins: [ resolve(), commonjs(), babel( { babelHelpers: 'bundled' } ), terser() ]
   });
 
   await bundle.write({
